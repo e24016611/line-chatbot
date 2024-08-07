@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Partner {
+  id   Int    @id @default(autoincrement())
+  name String
+  type String
+}
+
+model Category {
+  id          Int           @id @default(autoincrement())
+  name        String
+  isAgent     Boolean       @default(false)
+  created     DateTime      @default(now())
+  deleted     Boolean       @default(false)
+  Transaction Transaction[]
+  Item        Item[]
+}
+
+model Item {
+  id                Int                 @id @default(autoincrement())
+  categoryId        Int
+  name              String
+  created           DateTime            @default(now())
+  deleted           Boolean             @default(false)
+  category          Category            @relation(fields: [categoryId], references: [id])
+  TransactionDetail TransactionDetail[]
+}
+
+model TransactionDetail {
+  transactionId Int
+  itemId        Int
+  quantity      Int         @default(0)
+  unitPrice     Int
+  created       DateTime    @default(now())
+  item          Item        @relation(fields: [itemId], references: [id])
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+
+  @@id([transactionId, itemId])
+}
+
+model Transaction {
+  id                  Int                 @id @default(autoincrement())
+  buyer               String
+  seller              String
+  categoryId          Int
+  amount              Int
+  isShipped           Boolean             @default(false)
+  isAccounted         Boolean             @default(false)
+  transactionDate     DateTime
+  parentTransactionId Int?
+  parentTransaction   Transaction?        @relation("parentChildTransaction", fields: [parentTransactionId], references: [id])
+  childTransactions   Transaction[]       @relation("parentChildTransaction")
+  created             DateTime            @default(now())
+  deleted             Boolean             @default(false)
+  category            Category            @relation(fields: [categoryId], references: [id])
+  TransactionDetail   TransactionDetail[]
+}
